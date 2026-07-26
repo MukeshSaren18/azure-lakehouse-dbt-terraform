@@ -23,42 +23,42 @@ Built to complement the [Real-Time ML Feature Store](https://github.com/MukeshSa
 
 ```
                     ┌──────────────────────────────────────┐
-                    │         Terraform (IaC)               │
-                    │  Provisions & manages all infra below │
+                    │         Terraform (IaC)              │
+                    │  Provisions & manages all infra below│
                     └──────────────────┬───────────────────┘
                                        │
           ┌────────────────────────────▼──────────────────────────────┐
-          │                  Azure Data Platform                       │
-          │                                                            │
+          │                  Azure Data Platform                      │
+          │                                                           │
           │  ADLS Gen2          Azure Databricks       Azure Purview  │
-          │  (OneLake)          (Lakehouse)             (Governance)   │
+          │  (OneLake)          (Lakehouse)             (Governance)  │
           └────────────────────────────┬──────────────────────────────┘
                                        │
                     ┌──────────────────▼──────────────────┐
-                    │       Medallion Lakehouse             │
-                    │                                       │
-                    │  Bronze (raw)  →  Silver (cleaned)    │
-                    │         Auto Loader / ADF             │
-                    └──────────────────┬────────────────────┘
+                    │       Medallion Lakehouse           │
+                    │                                     │
+                    │  Bronze (raw)  →  Silver (cleaned)  │
+                    │         Auto Loader / ADF           │
+                    └──────────────────┬──────────────────┘
                                        │
                     ┌──────────────────▼──────────────────┐
-                    │         dbt Transformations           │
-                    │                                       │
-                    │  Silver models  →  Gold models        │
-                    │  (staging)          (marts + OBT)     │
-                    │  Tests · Docs · Lineage               │
-                    └──────────────────┬────────────────────┘
+                    │         dbt Transformations         │
+                    │                                     │
+                    │  Silver models  →  Gold models      │
+                    │  (staging)          (marts + OBT)   │
+                    │  Tests · Docs · Lineage             │
+                    └──────────────────┬──────────────────┘
                                        │
-               ┌───────────────────────▼──────────────────────┐
+               ┌───────────────────────▼────────────────────────┐
                │              Orchestration                     │
                │  Dagster (asset-based) + Airflow (legacy DAGs) │
-               └──────────────────────────────────────────────┘
+               └────────────────────────────────────────────────┘
                                        │
-                    ┌──────────────────▼──────────────────┐
-                    │        Microsoft Purview              │
+                    ┌──────────────────▼─────────────────────┐
+                    │        Microsoft Purview               │
                     │  Catalogue · Lineage · Classifications │
-                    │  Policy enforcement · Data quality    │
-                    └─────────────────────────────────────┘
+                    │  Policy enforcement · Data quality     │
+                    └────────────────────────────────────────┘
 ```
 
 ---
