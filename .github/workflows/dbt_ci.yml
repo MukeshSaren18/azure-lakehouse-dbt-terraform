@@ -1,0 +1,103 @@
+name: dbt CI — Slim Run on PR
+
+on:
+  pull_request:
+    paths:
+      - "dbt_project/**"
+  push:
+    branches: [main]
+    paths:
+      - "dbt_project/**"
+
+env:
+  DBT_PROFILES_DIR: ${{ github.workspace }}/dbt_project
+  DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+  DATABRICKS_HTTP_PATH: ${{ secrets.DATABRICKS_HTTP_PATH }}
+  DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+jobs:
+  dbt-slim-ci:
+    name: dbt Slim CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Full history for state:modified comparison
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dbt + dependencies
+        run: |
+          pip install dbt-databricks dbt-utils
+
+      - name: dbt deps
+        working-directory: dbt_project
+        run: dbt deps
+
+      - name: Download production manifest (for slim CI state comparison)
+        # Pulls the last-run manifest from the prod dbt run artifacts
+        # stored in ADLS Gen2. Falls back to full run if not available.
+        working-directory: dbt_project
+        run: |
+          az storage blob download \
+            --account-name ${{ secrets.ADLS_ACCOUNT_NAME }} \
+            --container-name gold \
+            --name dbt-artifacts/manifest.json \
+            --file target/prod_manifest.json \
+            --auth-mode login \
+          || echo "No prod manifest found — running full build."
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
+      - name: dbt compile (generate manifest for this PR)
+        working-directory: dbt_project
+        run: dbt compile
+
+      - name: dbt run — changed models + downstream
+        working-directory: dbt_project
+        run: |
+          if [ -f target/prod_manifest.json ]; then
+            echo "Running slim CI: state:modified+"
+            dbt run \
+              --select "state:modified+" \
+              --defer \
+              --state target/ \
+              --target dev
+          else
+            echo "Running full build (no prod manifest)"
+            dbt run --target dev
+          fi
+
+      - name: dbt test — changed models
+        working-directory: dbt_project
+        run: |
+          if [ -f target/prod_manifest.json ]; then
+            dbt test \
+              --select "state:modified+" \
+              --defer \
+              --state target/ \
+              --target dev
+          else
+            dbt test --target dev
+          fi
+
+      - name: dbt source freshness
+        working-directory: dbt_project
+        run: dbt source freshness
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-artifacts
+          path: |
+            dbt_project/target/manifest.json
+            dbt_project/target/run_results.json

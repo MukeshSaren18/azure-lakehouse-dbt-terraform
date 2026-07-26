@@ -1,0 +1,90 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: >
+      Cleaned, deduplicated order events from SAP BW via Bronze.
+      One row per order_id — latest ingested event wins.
+    columns:
+      - name: order_id
+        description: "Unique order identifier."
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: "FK to stg_customers."
+        tests:
+          - not_null
+      - name: order_amount_eur
+        description: "Order value in EUR, rounded to 2dp."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000
+      - name: order_status
+        description: "Normalised order lifecycle status."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED']
+      - name: order_size_band
+        tests:
+          - accepted_values:
+              values: ['small', 'medium', 'large', 'enterprise']
+      - name: order_timestamp
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: timestamp
+
+  - name: stg_customers
+    description: >
+      Deduplicated customer master from CRM daily snapshot.
+      PII columns (email, name) present; masked at Gold layer.
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+      - name: email
+        description: "PII — auto-classified by Microsoft Purview as PersonalData.Email."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+      - name: country_code
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_value_lengths_to_be_between:
+              min_value: 2
+              max_value: 2
+      - name: customer_segment
+        tests:
+          - accepted_values:
+              values: ['Standard', 'Premium', 'Wholesale', 'Internal']
+
+  - name: stg_transactions
+    description: "Cleaned payment transaction events. High-volume, partitioned by transaction_date."
+    columns:
+      - name: transaction_id
+        tests:
+          - not_null
+          - unique
+      - name: order_id
+        tests:
+          - not_null
+      - name: transaction_amount_eur
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.01
+              max_value: 500000
+      - name: transaction_status
+        tests:
+          - accepted_values:
+              values: ['PENDING', 'COMPLETED', 'FAILED', 'REFUNDED', 'CHARGEBACK']
+      - name: payment_method
+        tests:
+          - accepted_values:
+              values: ['CARD', 'BANK_TRANSFER', 'APPLE_PAY', 'GOOGLE_PAY', 'VOUCHER', 'CRYPTO']

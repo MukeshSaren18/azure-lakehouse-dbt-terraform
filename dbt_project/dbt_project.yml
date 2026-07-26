@@ -1,0 +1,56 @@
+name: 'azure_lakehouse'
+version: '1.0.0'
+config-version: 2
+
+profile: 'azure_lakehouse'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+docs-paths: ["docs"]
+
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+# Model-level materialisation defaults per layer
+models:
+  azure_lakehouse:
+    silver:
+      +materialized: view
+      +schema: silver
+      +tags: ["silver", "staging"]
+    gold:
+      +materialized: table
+      +schema: gold
+      +tags: ["gold", "mart"]
+      fct_orders:
+        +materialized: incremental
+        +incremental_strategy: merge
+        +unique_key: order_id
+      mart_customer_lifetime:
+        +materialized: incremental
+        +incremental_strategy: merge
+        +unique_key: customer_id
+
+# Snapshot defaults (SCD Type 2)
+snapshots:
+  azure_lakehouse:
+    +target_schema: snapshots
+    +strategy: timestamp
+    +updated_at: updated_at
+
+# Seed defaults (reference/lookup data)
+seeds:
+  azure_lakehouse:
+    +schema: seeds
+
+# Variable definitions (override per environment)
+vars:
+  # Lookback window for incremental loads (days)
+  incremental_lookback_days: 3
+  # Source database in Unity Catalog
+  source_catalog: "main"
+  source_schema: "bronze"
+  # Purview lineage push toggle
+  push_purview_lineage: true

@@ -1,0 +1,61 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: >
+      Raw ingestion layer. Tables are populated by ADF pipelines and Auto Loader
+      jobs writing to ADLS Gen2 → Delta Lake Bronze containers.
+      All tables are append-only; deduplication and typing happen in Silver.
+    database: main           # Unity Catalog catalog name
+    schema: bronze
+    tags: ["bronze", "raw"]
+
+    # Source freshness checks — dbt source freshness command
+    freshness:
+      warn_after: {count: 6, period: hour}
+      error_after: {count: 24, period: hour}
+    loaded_at_field: _ingestion_timestamp
+
+    tables:
+      - name: raw_orders
+        description: "Order events ingested from SAP BW via ADF. One row per order event."
+        columns:
+          - name: order_id
+            description: "Source system order identifier. Not guaranteed unique at this layer."
+          - name: customer_id
+            description: "Foreign key to customer master."
+          - name: order_status
+            description: "Order lifecycle status from source."
+          - name: order_amount_eur
+            description: "Order value in EUR as received from source."
+          - name: order_timestamp
+            description: "Event timestamp from source system."
+          - name: _ingestion_timestamp
+            description: "Timestamp when Auto Loader wrote this record to Bronze."
+          - name: _source_file
+            description: "Source file path — set by Auto Loader for traceability."
+
+      - name: raw_customers
+        description: "Customer master data from CRM system. Full snapshot refreshed daily."
+        columns:
+          - name: customer_id
+          - name: first_name
+          - name: last_name
+          - name: email
+            description: "PII — classified by Microsoft Purview as PersonalData.Email."
+          - name: country_code
+          - name: customer_segment
+          - name: created_at
+          - name: updated_at
+          - name: _ingestion_timestamp
+
+      - name: raw_transactions
+        description: "Payment transaction events. High volume — partitioned by event_date."
+        columns:
+          - name: transaction_id
+          - name: order_id
+          - name: payment_method
+          - name: transaction_amount_eur
+          - name: transaction_status
+          - name: transaction_timestamp
+          - name: _ingestion_timestamp

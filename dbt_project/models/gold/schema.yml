@@ -1,0 +1,78 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: >
+      Gold customer dimension. SCD Type 1. PII masked (email hashed).
+      Enriched with lifetime order statistics and customer health status.
+    columns:
+      - name: customer_sk
+        description: "Surrogate key — SHA hash of customer_id."
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+      - name: customer_status
+        tests:
+          - accepted_values:
+              values: ['active', 'lapsing', 'churned', 'never_ordered']
+      - name: lifetime_order_count
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+
+  - name: fct_orders
+    description: >
+      Gold orders fact table. Incremental merge on order_id.
+      Joins orders + transactions + customer dimension.
+      Partitioned by order_date; Z-Ordered on customer_id + order_status.
+    columns:
+      - name: order_id
+        tests:
+          - not_null
+          - unique
+      - name: customer_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_sk
+      - name: net_revenue_eur
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -50000   # allow refunds creating negative net
+              max_value: 1000000
+      - name: order_status
+        tests:
+          - accepted_values:
+              values: ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'REFUNDED']
+
+  - name: mart_customer_lifetime
+    description: >
+      One Big Table (OBT) for customer analytics and ML feature engineering.
+      One row per customer — latest state + rolling aggregates (7d/30d/90d/365d/lifetime).
+      Tagged ml_feature_ready — feeds directly into the Real-Time Feature Store.
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+      - name: customer_status
+        tests:
+          - accepted_values:
+              values: ['active', 'lapsing', 'churned', 'never_ordered']
+      - name: lifetime_orders
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+      - name: days_since_last_order
+        description: >
+          Key churn feature. NULL for customers who have never ordered.
+          Fed into the Real-Time Feature Store for fraud detection and
+          recommendation models.

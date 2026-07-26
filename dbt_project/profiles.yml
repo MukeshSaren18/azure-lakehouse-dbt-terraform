@@ -1,0 +1,39 @@
+# Copy this file to ~/.dbt/profiles.yml and fill in your values.
+# Never commit credentials — use environment variables as shown.
+
+azure_lakehouse:
+  target: dev
+  outputs:
+
+    # ── Databricks (dev workspace) ──────────────────────────────────
+    dev:
+      type: databricks
+      catalog: main                          # Unity Catalog catalog
+      schema: dbt_dev_{{ env_var('DBT_USER', 'local') }}
+      host: "{{ env_var('DATABRICKS_HOST') }}"        # e.g. adb-xxxx.azuredatabricks.net
+      http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}" # /sql/1.0/warehouses/xxxx
+      token: "{{ env_var('DATABRICKS_TOKEN') }}"
+      threads: 8
+      connect_timeout: 30
+      connect_retries: 3
+
+    # ── Databricks (production workspace) ───────────────────────────
+    prod:
+      type: databricks
+      catalog: main
+      schema: gold
+      host: "{{ env_var('DATABRICKS_PROD_HOST') }}"
+      http_path: "{{ env_var('DATABRICKS_PROD_HTTP_PATH') }}"
+      token: "{{ env_var('DATABRICKS_PROD_TOKEN') }}"
+      threads: 16
+      connect_timeout: 60
+      connect_retries: 5
+
+    # ── DuckDB (local development — no Azure needed) ─────────────────
+    # Run: dbt run --target local
+    # Useful for fast iteration on model logic before pushing to Databricks
+    local:
+      type: duckdb
+      path: "/tmp/azure_lakehouse_local.duckdb"
+      schema: main
+      threads: 4

@@ -1,0 +1,16 @@
+packages:
+  # Databricks adapter — required for Unity Catalog + Delta Lake targets
+  - package: databricks/dbt_databricks
+    version: [">=1.8.0", "<2.0.0"]
+
+  # dbt utility macros (surrogate keys, date spines, pivot, etc.)
+  - package: dbt-labs/dbt_utils
+    version: [">=1.2.0", "<2.0.0"]
+
+  # Extended test suite — range checks, regex, freshness assertions
+  - package: calogica/dbt_expectations
+    version: [">=0.10.0", "<1.0.0"]
+
+  # Audit log — tracks row counts and column-level changes per run
+  - package: dbt-labs/audit_helper
+    version: [">=0.12.0", "<1.0.0"]
