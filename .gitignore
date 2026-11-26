@@ -16,3 +16,12 @@ __pycache__/
 
 # Credentials
 *.tfvars.secret
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test & lint caches
+.pytest_cache/
+.ruff_cache/
+.venv/

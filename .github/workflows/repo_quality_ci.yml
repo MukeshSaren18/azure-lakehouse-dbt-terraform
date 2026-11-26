@@ -1,0 +1,76 @@
+name: Repo Quality & Weekly Health Check
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+  schedule:
+    # Weekly health check every Monday at 08:00 UTC
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+jobs:
+  python-and-yaml:
+    name: Python Lint, Tests & YAML Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install lint and test tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pytest pyyaml
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Validate YAML files
+        run: |
+          python -c "
+          import pathlib, sys, yaml
+          errors = []
+          for p in pathlib.Path('.').rglob('*.y*ml'):
+              if '.git' in p.parts:
+                  continue
+              try:
+                  yaml.safe_load(p.read_text(encoding='utf-8'))
+              except Exception as e:
+                  errors.append(f'{p}: {e}')
+          if errors:
+              print('\n'.join(errors))
+              sys.exit(1)
+          print('All YAML files are valid.')
+          "
+
+      - name: Lint Python with Ruff
+        run: ruff check purview orchestration $( [ -d tests ] && echo tests || true )
+
+      - name: Run unit tests (if present)
+        run: |
+          if [ -d tests ]; then
+            pytest -q
+          else
+            echo "No tests/ directory yet — skipping pytest."
+          fi
+
+  terraform-fmt:
+    name: Terraform Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.8.0"
+
+      - name: Check Terraform formatting
+        working-directory: terraform
+        run: terraform fmt -check -recursive
