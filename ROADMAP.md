@@ -7,7 +7,7 @@ A structured, 2-month engineering backlog to complete every component documented
 ---
 
 ## Weeks 1–2: Packaging, Foundation & Missing dbt Core Assets
-- [ ] **W1-1:** Add `pyproject.toml`, `requirements.txt`, and `LICENSE` (MIT) so Python tooling and Dependabot pip updates work out of the box.
+- [x] **W1-1:** Add `pyproject.toml`, `requirements.txt`, and `LICENSE` (MIT) so Python tooling and Dependabot pip updates work out of the box.
 - [ ] **W1-2:** Add `dbt_project/profiles.yml.example` and sanitize `dbt_project/profiles.yml` for local DuckDB + Databricks env-var config.
 - [ ] **W1-3:** Add `dbt_project/seeds/` with sample reference data (e.g., `country_codes.csv`, `currency_rates.csv`) and seed schema YAML.
 - [ ] **W2-1:** Implement missing Gold dimension model `dbt_project/models/gold/dim_products.sql` and register it in `models/gold/schema.yml`.

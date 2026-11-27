@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "azure-lakehouse-platform"
+version = "0.1.0"
+description = "Azure Lakehouse data platform with dbt, Terraform, Microsoft Purview, and Dagster."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+authors = [
+    { name = "Mukesh Saren" },
+]
+keywords = ["azure", "lakehouse", "dbt", "terraform", "purview", "dagster", "databricks"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "dbt-core>=1.8.0,<2.0.0",
+    "dbt-databricks>=1.8.0,<2.0.0",
+    "dbt-duckdb>=1.8.0,<2.0.0",
+    "dagster>=1.7.0,<2.0.0",
+    "dagster-dbt>=0.23.0,<1.0.0",
+    "dagster-databricks>=0.23.0,<1.0.0",
+    "azure-identity>=1.15.0,<2.0.0",
+    "requests>=2.31.0,<3.0.0",
+    "pyyaml>=6.0.0,<7.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0,<9.0.0",
+    "ruff>=0.4.0,<1.0.0",
+]
+airflow = [
+    "apache-airflow>=2.8.0,<3.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/MukeshSaren18/azure-lakehouse-dbt-terraform"
+Repository = "https://github.com/MukeshSaren18/azure-lakehouse-dbt-terraform"
+Issues = "https://github.com/MukeshSaren18/azure-lakehouse-dbt-terraform/issues"
+
+[tool.setuptools.packages.find]
+include = ["purview*", "orchestration*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+exclude = [
+    ".git",
+    ".venv",
+    "dbt_project/dbt_packages",
+    "dbt_project/target",
+    "terraform",
+]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]

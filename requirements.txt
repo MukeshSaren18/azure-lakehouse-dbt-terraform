@@ -1,0 +1,19 @@
+# Core Python dependencies for Azure Lakehouse Platform
+# Keep aligned with [project.dependencies] in pyproject.toml
+
+# dbt core & adapters (Databricks + local DuckDB)
+dbt-core>=1.8.0,<2.0.0
+dbt-databricks>=1.8.0,<2.0.0
+dbt-duckdb>=1.8.0,<2.0.0
+
+# Dagster orchestration
+dagster>=1.7.0,<2.0.0
+dagster-dbt>=0.23.0,<1.0.0
+dagster-databricks>=0.23.0,<1.0.0
+
+# Microsoft Purview Atlas lineage bridge
+azure-identity>=1.15.0,<2.0.0
+requests>=2.31.0,<3.0.0
+
+# Configuration & YAML parsing
+pyyaml>=6.0.0,<7.0.0
