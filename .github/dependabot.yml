@@ -8,9 +8,6 @@ updates:
       time: "09:00"
       timezone: "Europe/Dublin"
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "ci"
 
   - package-ecosystem: "terraform"
     directory: "/terraform"
@@ -20,9 +17,6 @@ updates:
       time: "09:00"
       timezone: "Europe/Dublin"
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "terraform"
 
   - package-ecosystem: "pip"
     directory: "/"
@@ -32,6 +26,3 @@ updates:
       time: "09:00"
       timezone: "Europe/Dublin"
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "python"
